@@ -345,10 +345,10 @@ void KittiParser::loadTimestampMaps() {
       dataset_path_ + "/" + kPoseFolder + "/" + kTimestampFilename;
   loadTimestampsIntoVector(filename, &timestamps_pose_ns_);
 
-  std::cout << "Timestmap map for pose:\n";
-  for (size_t i = 0; i < timestamps_pose_ns_.size(); ++i) {
-    std::cout << i << " " << timestamps_pose_ns_[i] << std::endl;
-  }
+  // std::cout << "Timestmap map for pose:\n";
+  // for (size_t i = 0; i < timestamps_pose_ns_.size(); ++i) {
+  //   std::cout << i << " " << timestamps_pose_ns_[i] << std::endl;
+  // }
 
   // Velodyne.
   filename = dataset_path_ + "/" + kVelodyneFolder + "/" + kTimestampFilename;
@@ -393,7 +393,7 @@ bool KittiParser::loadTimestampsIntoVector(
     timestamp_vec->push_back(timestamp);
   }
 
-  std::cout << "Timestamps: " << std::endl
+  std::cout << "Timestamps range: " << std::endl
             << timestamp_vec->front() << " " << timestamp_vec->back()
             << std::endl;
 
@@ -447,7 +447,7 @@ bool KittiParser::getPointcloudAtEntry(
     pcl::PointCloud<pcl::PointXYZI>* ptcloud) {
   // Get the timestamp for this first.
   if (timestamps_vel_ns_.size() <= entry) {
-    std::cout << "Warning: no timestamp for this entry!\n";
+    // std::cout << "Warning: no timestamp for this entry(point cloud)!\n";
     return false;
   }
 
@@ -460,22 +460,34 @@ bool KittiParser::getPointcloudAtEntry(
 
   std::string filename = dataset_path_ + "/" + kVelodyneFolder + "/" +
                          kDataFolder + "/" + getFilenameForEntry(entry) +
-                         ".bin";
+                         ".txt";
 
   std::ifstream input(filename, std::ios::in | std::ios::binary);
   if (!input) {
-    std::cout << "Could not open pointcloud file.\n";
+    // std::cout << "Could not open pointcloud file.\n";
+    std::cout << "Could not open pointcloud file: " << filename << std::endl;
     return false;
   }
 
   // From yanii's kitti-pcl toolkit:
   // https://github.com/yanii/kitti-pcl/blob/master/src/kitti2pcd.cpp
-  for (size_t i = 0; input.good() && !input.eof(); i++) {
+  // for (size_t i = 0; input.good() && !input.eof(); i++) {
+  //   pcl::PointXYZI point;
+  //   input.read((char*)&point.x, 3 * sizeof(float));
+  //   input.read((char*)&point.intensity, sizeof(float));
+  //   ptcloud->push_back(point);
+  // }
+  std::string s_point[4];
+  while(input >> s_point[0]>> s_point[1]>> s_point[2]>> s_point[3])
+  {
     pcl::PointXYZI point;
-    input.read((char*)&point.x, 3 * sizeof(float));
-    input.read((char*)&point.intensity, sizeof(float));
+    point.x = std::stod(s_point[0]);
+    point.y = std::stod(s_point[1]);
+    point.z = std::stod(s_point[2]);
+    point.intensity = std::stod(s_point[3]);
     ptcloud->push_back(point);
   }
+
   input.close();
   return true;
 }
@@ -485,7 +497,7 @@ bool KittiParser::getImageAtEntry(uint64_t entry, uint64_t cam_id,
   // Get the timestamp for this first.
   if (timestamps_cam_ns_.size() <= cam_id ||
       timestamps_cam_ns_[cam_id].size() <= entry) {
-    std::cout << "Warning: no timestamp for this entry!\n";
+    // std::cout << "Warning: no timestamp for this entry(image)!\n";
     return false;
   }
   *timestamp = (timestamps_cam_ns_[cam_id])[entry];
